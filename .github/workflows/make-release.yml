@@ -26,16 +26,23 @@ jobs:
       - name: Create new tag and push it to repo
         id: tag
         run: |
-          tag_name=v$(date +'%Y.%m.%d')
+          base_tag_name=v$(date +'%Y.%m.%d')
+          tag_name=$base_tag_name
 
-          check_tag_name:
-          if [ $(git tag -l "$tag_name") ]; then
-            $tag_name =~ "\A$(date +'%Y\.%m\.%d')-fix\.(\d+)\z"
-            version="${BASH_REMATCH[1]:=0}"
-            tag_name=v$(date +'%Y.%m.%d')-fix.$version
+          function check_tag_name {
+            if [ $(git tag -l "$tag_name") ]; then
+              echo "Found existed tag: $tag_name"
+              regexp="\A$base_tag_name-fix\.(\d+)\z"
+              [[ $tag_name =~ $regexp ]]
+              version="$((${BASH_REMATCH[1]:--1} + 1))"
+              tag_name="$base_tag_name-fix.$version"
+              echo "Created next tag: $tag_name"
 
-            goto check_tag_name
-          fi
+              check_tag_name
+            fi
+          }
+
+          check_tag_name
           
           git tag $tag_name
           git push origin $tag_name
