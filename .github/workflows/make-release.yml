@@ -1,0 +1,43 @@
+name: Make release
+
+on:
+  workflow_dispatch:
+
+jobs:
+  update-release:
+    runs-on: ubuntu-latest
+    steps:
+      - name: "Checkout"
+        uses: actions/checkout@v3
+        with:
+          ref: release
+          fetch-depth: 0
+          token: ${{ secrets.DSFOX_GH_ACTIONS }}
+
+      - name: Setup git
+        run: |
+          git config user.email "$GITHUB_ACTOR@users.noreply.github.com"
+          git config user.name "$GITHUB_ACTOR"
+
+      - name: Merge changes from `master` branch
+        run: |
+          git reset --hard origin/master
+
+      - name: Create new tag and push it to repo
+        id: tag
+        run: |
+          tag_name=v$(date +'%Y.%m.%d')
+          git tag $tag_name
+          git push origin $tag_name
+          echo ::set-output name=result::$tag_name
+
+      - name: Create release in GitHub
+        uses: actions/github-script@v6
+        with:
+          script: |
+            github.rest.repos.createRelease({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              tag_name: '${{ steps.tag.outputs.result }}',
+              generate_release_notes: true,
+            });

@@ -1,0 +1,11 @@
+changelog:
+  categories:
+    - title: 🎉 Exciting New Features 
+      labels:
+        - t:feat
+    - title: 🛠 Fixes bugs
+      labels:
+        - t:fix
+    - title: 🍭 Other Changes
+      labels:
+        - "*"
